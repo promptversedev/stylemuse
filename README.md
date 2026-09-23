@@ -1,4 +1,4 @@
-# StyleMuse — Swap Model & BG (Next.js on Cloudflare)
+# StyleMuse — Swap Model & BG(Next.js on Cloudflare)
 
 A Next.js (App Router) rebuild of the original static mockup (`index.html` /
 `assets/`, kept in the repo for reference). The live app only shows the two
