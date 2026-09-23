@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Swap Model &amp; BG — AI Model and Background Changer</title>
+<meta name="description" content="Replace the model and background in any product photo. Pick from the AI model library, choose a scene, and browse an infinite inspiration feed.">
+<link rel="preconnect" href="https://mediacdn.bandy.ai" crossorigin>
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#showcase">Skip to inspiration feed</a>
+
+<!-- ══════════════════════════════════════════════════════ icon sprite ══ -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="i-back"><path d="M9 14H5V10M5 10L8.5 13.5A7 7 0 1 0 10 6.5"/></g>
+    <g id="i-shirt"><path d="M8 3 5 4.5 3 7l2.5 2L7 7.5V17h10V7.5L18.5 9 21 7l-2-2.5L16 3a4 4 0 0 1-8 0Z"/></g>
+    <g id="i-gem"><path d="M6 3h12l3 6-9 12L3 9Z"/><path d="M3 9h18M9 3 7 9l5 12M15 3l2 6-5 12"/></g>
+    <g id="i-swap"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M13 7h5.5M18.5 7 16 4.5M18.5 7 16 9.5M11 17H5.5M5.5 17 8 14.5M5.5 17 8 19.5"/></g>
+    <g id="i-video"><rect x="3" y="6" width="12" height="12" rx="2"/><path d="m15 11 6-3.5v9L15 13Z"/></g>
+    <g id="i-poses"><circle cx="8" cy="6" r="2.4"/><path d="M8 9v11M4.5 12.5 8 11l3.5 1.5M5.5 20 8 15.5 10.5 20"/><circle cx="17" cy="6" r="2.4"/><path d="M17 9v11"/></g>
+    <g id="i-hand"><path d="M8 12V5.5a1.5 1.5 0 0 1 3 0V11m0-1V4.5a1.5 1.5 0 0 1 3 0V11m0-.5V6a1.5 1.5 0 0 1 3 0v8a7 7 0 0 1-7 7c-3 0-4.5-1.5-5.6-3.4L5 15.5c-.6-1 .3-2.3 1.4-1.9L8 14.5"/></g>
+    <g id="i-tools"><path d="M14.7 6.3a3.9 3.9 0 0 0 5.1 5.1L21 12l-8.8 8.8a2 2 0 0 1-2.8 0l-.2-.2a2 2 0 0 1 0-2.8L12 15"/><path d="m3 7 4-4 3.5 3.5L7 10Z"/></g>
+    <g id="i-sparkle"><path d="m12 3 2.2 5.3L19.5 10l-5.3 1.7L12 17l-2.2-5.3L4.5 10l5.3-1.7Z"/><path d="M18.5 15.5 19.5 18l2.5 1-2.5 1-1 2.5-1-2.5L15 19l2.5-1Z"/></g>
+    <g id="i-image"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4 17 4.8-4.8a2 2 0 0 1 2.8 0L20 20"/></g>
+    <g id="i-chevron"><path d="m6 9 6 6 6-6"/></g>
+    <g id="i-search"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></g>
+    <g id="i-ratio"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M9 3v18M4 9h16"/></g>
+    <g id="i-layers"><path d="m12 3 8.5 4.5L12 12 3.5 7.5Z"/><path d="m3.5 12 8.5 4.5 8.5-4.5"/></g>
+    <g id="i-coin"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M14.5 9.8c-.6-.8-1.5-1.1-2.5-1.1-1.4 0-2.5.7-2.5 1.9s1.1 1.6 2.5 1.9 2.5.7 2.5 1.9-1.1 1.9-2.5 1.9c-1 0-1.9-.3-2.5-1.1"/></g>
+    <g id="i-magic"><path d="m5 19 9.5-9.5M16 4l.9 2.1L19 7l-2.1.9L16 10l-.9-2.1L13 7l2.1-.9Z"/><path d="m6.5 4 .6 1.4 1.4.6-1.4.6L6.5 8l-.6-1.4L4.5 6l1.4-.6ZM19 15l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6Z"/></g>
+    <g id="i-close"><path d="m6 6 12 12M18 6 6 18"/></g>
+    <g id="i-menu"><path d="M4 7h16M4 12h16M4 17h16"/></g>
+    <g id="i-check"><path d="m5 12.5 4.5 4.5L19 7"/></g>
+    <g id="i-heart"><path d="M12 20s-7.5-4.6-7.5-9.4A4.1 4.1 0 0 1 12 7.8a4.1 4.1 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20Z"/></g>
+    <g id="i-plus"><path d="M12 5v14M5 12h14"/></g>
+    <g id="i-user"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></g>
+    <g id="i-scene"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M3 15.5 8 11l4 3.5L16 11l5 4.5"/><circle cx="8" cy="8.5" r="1.4"/></g>
+    <g id="i-filter"><path d="M4 6h16M7 12h10M10 18h4"/></g>
+  </defs>
+</svg>
+
+<!-- ═══════════════════════════════════════════════════ mobile top bar ══ -->
+<header class="topbar">
+  <button class="topbar__btn" type="button" id="navToggle" aria-label="Open navigation" aria-controls="rail" aria-expanded="false">
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-menu"/></svg>
+  </button>
+  <span class="topbar__brand">Bandy<span>.ai</span></span>
+  <span class="credits credits--top"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-coin"/></svg>24</span>
+</header>
+
+<div class="app">
+
+  <!-- ══════════════════════════════════════════════════════ icon rail ══ -->
+  <nav class="rail" id="rail" aria-label="Workspace">
+    <div class="rail__brand">Bandy<span>.ai</span></div>
+    <button class="rail__back" type="button" aria-label="Back">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-back"/></svg>
+    </button>
+    <ul class="rail__list" id="railList"><!-- rendered by app.js --></ul>
+  </nav>
+  <div class="scrim" id="navScrim" hidden></div>
+
+  <!-- ═════════════════════════════════════════════════════ workspace ══ -->
+  <div class="workspace">
+
+    <!-- ───────────────────────────────────────────────── create panel ── -->
+    <section class="panel" id="panel" aria-label="Swap model and background">
+      <header class="panel__head">
+        <h1 class="panel__title">Swap Model &amp; BG</h1>
+        <button class="panel__close" type="button" id="panelClose" aria-label="Close panel">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
+        </button>
+      </header>
+
+      <div class="panel__scroll">
+
+        <!-- upload -->
+        <div class="field">
+          <p class="field__label">Image</p>
+          <div class="dropzone" id="dropzone" role="button" tabindex="0"
+               aria-label="Click to upload image, works with real people or mannequins">
+            <svg class="ico ico--lg" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-image"/></svg>
+            <p class="dropzone__title">Click to upload image</p>
+            <p class="dropzone__sub">(Works with real people or mannequins)</p>
+            <p class="dropzone__hint">JPEG/PNG/WEBP, up to 20MB and 4096 &times; 4096 pixels.</p>
+            <img class="dropzone__preview" id="dropzonePreview" alt="" hidden>
+            <button class="dropzone__clear" type="button" id="dropzoneClear" aria-label="Remove image" hidden>
+              <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
+            </button>
+          </div>
+          <div class="examples">
+            <span class="examples__label">Try examples</span>
+            <ul class="examples__list" id="examples"><!-- rendered --></ul>
+          </div>
+        </div>
+
+        <!-- model picker -->
+        <section class="acc" id="accModel">
+          <button class="acc__head" type="button" aria-expanded="false" aria-controls="accModelBody">
+            <span class="acc__title">Select Model <em>(Optional)</em></span>
+            <span class="acc__value" id="modelValue"></span>
+            <svg class="ico acc__chevron" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"/></svg>
+          </button>
+          <div class="acc__body" id="accModelBody" role="region" hidden>
+            <div class="filters" id="modelFilters"><!-- rendered --></div>
+            <div class="picker" id="modelPicker">
+              <ul class="picker__grid picker__grid--model" id="modelGrid"><!-- rendered --></ul>
+              <p class="picker__empty" id="modelEmpty" hidden>No model matches these filters.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- background picker -->
+        <section class="acc" id="accBg">
+          <button class="acc__head" type="button" aria-expanded="false" aria-controls="accBgBody">
+            <span class="acc__title">Select BG <em>(Optional)</em></span>
+            <span class="acc__value" id="bgValue"></span>
+            <svg class="ico acc__chevron" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"/></svg>
+          </button>
+          <div class="acc__body" id="accBgBody" role="region" hidden>
+            <div class="filters" id="bgFilters"><!-- rendered --></div>
+            <div class="picker">
+              <ul class="picker__grid picker__grid--bg" id="bgGrid"><!-- rendered --></ul>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <footer class="panel__foot">
+        <div class="panel__opts">
+          <label class="opt">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-ratio"/></svg>
+            <select id="ratio" aria-label="Aspect ratio">
+              <option>2:3</option><option>3:4</option><option>1:1</option>
+              <option>4:3</option><option>3:2</option><option>9:16</option>
+            </select>
+          </label>
+          <label class="opt">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-layers"/></svg>
+            <select id="count" aria-label="Number of images">
+              <option value="1">1 Image</option>
+              <option value="2">2 Images</option>
+              <option value="4" selected>4 Images</option>
+              <option value="8">8 Images</option>
+            </select>
+          </label>
+          <span class="credits" id="credits" title="Credits required">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-coin"/></svg><b>24</b>
+          </span>
+        </div>
+        <button class="btn btn--create" type="button" id="createBtn" disabled>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-magic"/></svg> Create
+        </button>
+        <p class="panel__note" id="createNote">Upload an image to start.</p>
+      </footer>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────── showcase ──── -->
+    <section class="showcase" id="showcase" aria-label="Inspiration feed">
+
+      <div class="showcase__bar">
+        <div class="chips" id="chips" role="tablist" aria-label="Filter by category"><!-- rendered --></div>
+        <button class="chips__more" type="button" id="chipsMore" aria-expanded="false">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"/></svg>
+          <span class="sr-only">Show all categories</span>
+        </button>
+        <div class="search">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-search"/></svg>
+          <input type="search" id="search" placeholder="Search with keyword" aria-label="Search inspirations">
+        </div>
+      </div>
+
+      <div class="showcase__scroll" id="scroller">
+        <p class="showcase__meta" id="meta" aria-live="polite"></p>
+        <div class="grid" id="grid"><!-- rendered --></div>
+        <div class="grid grid--skeleton" id="skeleton" hidden aria-hidden="true"></div>
+        <div class="sentinel" id="sentinel" aria-hidden="true"></div>
+        <p class="feed-end" id="feedEnd" hidden>You have reached the end of the feed.</p>
+        <div class="feed-error" id="feedError" hidden>
+          <p>Could not load more inspirations.</p>
+          <button class="btn btn--ghost" type="button" id="retryBtn">Try again</button>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ mobile sticky action bar ══ -->
+<div class="actionbar">
+  <button class="btn btn--create" type="button" id="openPanel">
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-swap"/></svg> Swap Model &amp; BG
+  </button>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ lightbox ══ -->
+<div class="lightbox" id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Preview">
+  <button class="lightbox__close" type="button" id="lightboxClose" aria-label="Close preview">
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-close"/></svg>
+  </button>
+  <figure class="lightbox__figure">
+    <img id="lightboxImg" alt="">
+    <figcaption id="lightboxCap"></figcaption>
+  </figure>
+</div>
+
+<!-- toast -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
