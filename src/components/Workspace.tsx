@@ -23,6 +23,16 @@ const TAB_TITLE: Record<TabId, string> = {
   hairstyle: "Select Hairstyle",
 };
 
+// replaceState rather than a router push: switching sections is a view change
+// within one page, not a new history entry. Other params (?return=, ?want=)
+// used by the Studio hand-off are left untouched.
+function writeTabParam(tab: TabId) {
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("tab") === tab) return;
+  url.searchParams.set("tab", tab);
+  window.history.replaceState(window.history.state, "", url);
+}
+
 export function Workspace({
   initialModels,
   initialBackgrounds,
@@ -41,17 +51,27 @@ export function Workspace({
   const [activeTab, setActiveTab] = useState<TabId>("model");
 
   /**
-   * Open on the tab the Studio sent us for.
+   * Open on the tab the url names: `?want=` from the Studio, else this app's
+   * own `?tab=`, so a reload lands back on the section that was open.
    *
    * `?want=background` means the visitor clicked "Pick background" over there,
    * so landing them on the Model tab would make them find the right one first
    * — the opposite of the one-click errand the link promises.
    */
   useEffect(() => {
-    const want = new URLSearchParams(window.location.search).get("want");
-    if (want === "model" || want === "background" || want === "jewellery" || want === "hairstyle") {
-      setActiveTab(want as TabId);
-    }
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get("want") ?? params.get("tab");
+    const tab: TabId =
+      requested === "background" || requested === "jewellery" || requested === "hairstyle"
+        ? requested
+        : "model";
+    setActiveTab(tab);
+    writeTabParam(tab);
+  }, []);
+
+  const selectTab = useCallback((tab: TabId) => {
+    setActiveTab(tab);
+    writeTabParam(tab);
   }, []);
 
   const [user, setUser] = useState<User | null>(null);
@@ -251,7 +271,7 @@ export function Workspace({
       <TopBar railOpen={railOpen} onMenuClick={() => (railOpen ? closeDrawer() : openDrawer())} />
 
       <div className="app">
-        <Rail open={railOpen} onClose={closeDrawer} activeTab={activeTab} onSelectTab={setActiveTab} />
+        <Rail open={railOpen} onClose={closeDrawer} activeTab={activeTab} onSelectTab={selectTab} />
 
         <div className="workspace">
           <PickersSection
