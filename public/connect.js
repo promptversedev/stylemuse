@@ -1,14 +1,18 @@
 /**
- * StyleMuse Connect — pick a model or background from any website.
+ * StyleMuse Connect — pick a model, background, jewellery or hairstyle from
+ * any website.
  *
  *   <script src="https://YOUR_STYLEMUSE/connect.js"></script>
  *   <script>
  *     StyleMuse.configure({ client: "your-client-key" });
  *     document.querySelector("#pick").onclick = async () => {
- *       const pick = await StyleMuse.pick("model");   // or "background"
- *       if (pick) render(pick);                       // { id, name, imageUrl }
+ *       const pick = await StyleMuse.pick("model");   // or "background", "jewellery", "hairstyle"
+ *       if (pick) render(pick);                       // { id, name, imageUrl, originalUrl, makeup }
  *     };
  *   </script>
+ *
+ * A jewellery pick carries `makeup: { imageUrl, originalUrl }` — the look styled
+ * to go with it. Every other kind sends `makeup: null`.
  *
  * The picker opens in a popup and posts the answer back, so the host page never
  * navigates: a half-typed prompt, an in-progress upload and scroll position all
@@ -47,8 +51,10 @@
    *
    * Rejects only for things the caller can fix: no client key, a blocked popup.
    */
+  var KINDS = ["model", "background", "jewellery", "hairstyle"];
+
   function pick(kind) {
-    var want = kind === "background" ? "background" : "model";
+    var want = KINDS.indexOf(kind) >= 0 ? kind : "model";
 
     return new Promise(function (resolve, reject) {
       if (!config.client) {

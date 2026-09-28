@@ -607,9 +607,28 @@ img { display: block; max-width: 100%; }
   display: block;
 }
 
-.embedpicker__card span {
+.embedpicker__card > span:last-child {
   font-size: 12.5px;
   font-weight: 700;
+}
+
+/* Jewellery cards carry the makeup beside it, so they need twice the width. */
+.embedpicker__grid--jewellery {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.embedpicker__pair {
+  display: flex;
+  gap: 4px;
+}
+.embedpicker__pair img {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Hairstyle sources are square; a 3:4 crop would cut the sides off. */
+.embedpicker__grid--hairstyle .embedpicker__card img {
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
 }
 
 .embedpicker__empty,

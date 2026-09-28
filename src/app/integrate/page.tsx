@@ -109,8 +109,10 @@ export default function IntegratePage() {
             <code>StyleMuse.configure({"{ client }"})</code> — your client key. Call it once.
           </li>
           <li>
-            <code>StyleMuse.pick(kind)</code> — <code>&quot;model&quot;</code> or{" "}
-            <code>&quot;background&quot;</code>. Resolves with the item, or{" "}
+            <code>StyleMuse.pick(kind)</code> — <code>&quot;model&quot;</code>,{" "}
+            <code>&quot;background&quot;</code>, <code>&quot;jewellery&quot;</code> or{" "}
+            <code>&quot;hairstyle&quot;</code>. A jewellery pick also carries{" "}
+            <code>makeup</code>, the look styled to go with it. Resolves with the item, or{" "}
             <code>null</code> if the window was closed without choosing. Rejects only for things
             you can fix: a missing client key, or a blocked popup.
           </li>
@@ -195,13 +197,15 @@ export default function IntegratePage() {
           {`https://stylemuse.gemini-logo-remover.workers.dev/?return=<your-url>&want=model`}
         </pre>
         <p>
-          They come back to <code>return</code> with{" "}
-          <code>?stylemuse_model=&lt;id&gt;</code> and/or <code>?stylemuse_bg=&lt;id&gt;</code>.
-          Resolve those to items with:
+          They come back to <code>return</code> with any of{" "}
+          <code>?stylemuse_model=</code>, <code>?stylemuse_bg=</code>,{" "}
+          <code>?stylemuse_jewellery=</code> and <code>?stylemuse_hairstyle=</code>. Resolve those
+          to items with:
         </p>
         <pre className="docs__code">
-          {`GET /api/picks?model=<id>&background=<id>
-→ { model: { id, name, imageUrl } | null, background: … }`}
+          {`GET /api/picks?model=<id>&background=<id>&jewellery=<id>&hairstyle=<id>
+→ { model: { id, name, imageUrl, originalUrl } | null, background: …,
+    jewellery: { …, makeup: { imageUrl, originalUrl } } | null, hairstyle: … }`}
         </pre>
         <p className="docs__note">
           Strip those parameters once you have read them (<code>history.replaceState</code>), or
