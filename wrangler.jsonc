@@ -23,7 +23,7 @@
     // Public half of the Google OAuth client. The secret is NOT here —
     // set it with `wrangler secret put GOOGLE_CLIENT_SECRET`.
     "GOOGLE_CLIENT_ID": "1087184416394-921t9i5q15niv7s3m4kf19dc17lmapul.apps.googleusercontent.com",
-    "NEXT_PUBLIC_STUDIO_ORIGINS": "https://vastralook.vercel.app,http://localhost:3002"
+    "NEXT_PUBLIC_STUDIO_ORIGINS": "https://vastralook.vercel.app,https://www.vastralook.com,https://vastralook.com,http://localhost:3002"
   },
   // Secrets (SUPABASE_SERVICE_ROLE_KEY, R2 access keys, etc.) are NOT set here.
   // Set them with `wrangler secret put <NAME>` — see .env.example.
