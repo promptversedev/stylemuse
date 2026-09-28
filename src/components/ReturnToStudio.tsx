@@ -158,7 +158,9 @@ export function ReturnToStudio({
   if (!publicToken && !hasPick) {
     return (
       <span className="embedbtn" style={{ opacity: 0.7, cursor: "default" }}>
-        {want ? `Pick a ${want} to continue` : "Pick something to continue"}
+        {want
+          ? `Pick ${want === "jewellery" ? "jewellery" : `a ${want}`} to continue`
+          : "Pick something to continue"}
       </span>
     );
   }
