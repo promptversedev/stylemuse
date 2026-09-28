@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// The signed-in user's current model/background pick — this is the row the
-// public embed endpoint (/api/embed/[token]) reads to show the selection on
-// other websites, so it only persists for signed-in users.
+// The signed-in user's current model/background/jewellery/hairstyle pick —
+// this is the row the public embed endpoint (/api/embed/[token]) reads to
+// show the selection on other websites, so it only persists for signed-in
+// users.
 export async function GET() {
   const supabase = await createClient();
   const {
@@ -16,7 +17,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("selections")
-    .select("model_id, background_id, updated_at")
+    .select("model_id, background_id, jewellery_id, hairstyle_id, updated_at")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -42,9 +43,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  const { modelId, backgroundId } = body as {
+  const { modelId, backgroundId, jewelleryId, hairstyleId } = body as {
     modelId?: string | null;
     backgroundId?: string | null;
+    jewelleryId?: string | null;
+    hairstyleId?: string | null;
   };
 
   const { error } = await supabase.from("selections").upsert(
@@ -52,6 +55,8 @@ export async function POST(request: Request) {
       user_id: user.id,
       ...(modelId !== undefined ? { model_id: modelId } : {}),
       ...(backgroundId !== undefined ? { background_id: backgroundId } : {}),
+      ...(jewelleryId !== undefined ? { jewellery_id: jewelleryId } : {}),
+      ...(hairstyleId !== undefined ? { hairstyle_id: hairstyleId } : {}),
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" }

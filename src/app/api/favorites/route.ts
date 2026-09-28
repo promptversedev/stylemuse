@@ -39,11 +39,8 @@ export async function POST(request: Request) {
   const itemType = body?.itemType;
   const itemId = body?.itemId;
 
-  if (
-    (itemType !== "model" && itemType !== "background") ||
-    typeof itemId !== "string" ||
-    !itemId
-  ) {
+  const VALID_TYPES = ["model", "background", "jewellery", "hairstyle"];
+  if (!VALID_TYPES.includes(itemType) || typeof itemId !== "string" || !itemId) {
     return NextResponse.json({ error: "Invalid itemType/itemId" }, { status: 400 });
   }
 

@@ -3,20 +3,31 @@ import { r2PublicUrl } from "@/lib/r2";
 import { Workspace } from "@/components/Workspace";
 import type { ModelPickerItem } from "@/components/ModelPicker";
 import type { BackgroundPickerItem } from "@/components/BackgroundPicker";
+import type { JewelleryPickerItem } from "@/components/JewelleryPicker";
+import type { HairstylePickerItem } from "@/components/HairstylePicker";
 
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const [{ data: models }, { data: backgrounds }] = await Promise.all([
-    supabase
-      .from("models")
-      .select("id, name, image_key, gender, age_group, body_type, region")
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("backgrounds")
-      .select("id, name, image_key, category")
-      .order("sort_order", { ascending: true }),
-  ]);
+  const [{ data: models }, { data: backgrounds }, { data: jewellery }, { data: hairstyles }] =
+    await Promise.all([
+      supabase
+        .from("models")
+        .select("id, name, image_key, gender, age_group, body_type, region")
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("backgrounds")
+        .select("id, name, image_key, category")
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("jewellery")
+        .select("id, name, jewellery_key, makeup_key, category")
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("hairstyles")
+        .select("id, name, image_key, category")
+        .order("sort_order", { ascending: true }),
+    ]);
 
   const modelItems: ModelPickerItem[] = (models ?? []).map((m) => ({
     id: m.id,
@@ -35,5 +46,27 @@ export default async function HomePage() {
     category: b.category,
   }));
 
-  return <Workspace initialModels={modelItems} initialBackgrounds={backgroundItems} />;
+  const jewelleryItems: JewelleryPickerItem[] = (jewellery ?? []).map((j) => ({
+    id: j.id,
+    name: j.name,
+    jewelleryImageUrl: r2PublicUrl(j.jewellery_key),
+    makeupImageUrl: r2PublicUrl(j.makeup_key),
+    category: j.category,
+  }));
+
+  const hairstyleItems: HairstylePickerItem[] = (hairstyles ?? []).map((h) => ({
+    id: h.id,
+    name: h.name,
+    imageUrl: r2PublicUrl(h.image_key),
+    category: h.category,
+  }));
+
+  return (
+    <Workspace
+      initialModels={modelItems}
+      initialBackgrounds={backgroundItems}
+      initialJewellery={jewelleryItems}
+      initialHairstyles={hairstyleItems}
+    />
+  );
 }

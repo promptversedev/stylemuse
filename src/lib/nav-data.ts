@@ -1,6 +1,6 @@
-/* The rail is just two switches now: pick "Model" or "Background" and the
-   panel shows that picker exclusively. */
-export type TabId = "model" | "background";
+/* The rail is a set of switches: pick a section and the panel shows that
+   picker exclusively. */
+export type TabId = "model" | "background" | "jewellery" | "hairstyle";
 
 export type TabItem = {
   id: TabId;
@@ -11,4 +11,6 @@ export type TabItem = {
 export const TABS: TabItem[] = [
   { id: "model", label: "Model", icon: "user" },
   { id: "background", label: "Background", icon: "scene" },
+  { id: "jewellery", label: "Jewellery", icon: "gem" },
+  { id: "hairstyle", label: "Hairstyle", icon: "hair" },
 ];

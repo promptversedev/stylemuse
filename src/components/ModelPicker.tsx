@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/IconSprite";
-import { useToast } from "@/components/Toast";
 
 export type ModelPickerItem = {
   id: string;
@@ -43,7 +42,6 @@ export function ModelPicker({
   onSelect: (id: string) => void;
   onToggleFavorite: (id: string) => void;
 }) {
-  const toast = useToast();
   const [filters, setFilters] = useState<Filters>({ gender: null, age: null, body: null, region: null });
 
   const groups = useMemo(
@@ -102,17 +100,6 @@ export function ModelPicker({
 
       <div className="picker">
         <ul className="picker__grid picker__grid--model">
-          <li>
-            <button
-              type="button"
-              className="tile tile--upload"
-              onClick={() => toast("Upload a reference photo of your own model.")}
-            >
-              <Icon id="i-user" />
-              Your model
-            </button>
-          </li>
-
           {sorted.map((model) => {
             const isFav = favoritedIds.has(model.id);
             const isSelected = selectedId === model.id;

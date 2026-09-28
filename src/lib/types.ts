@@ -17,10 +17,31 @@ export type BackgroundRow = {
   sort_order: number;
 };
 
+// One row is one look: the jewellery shot and the makeup styled to go with
+// it. They are not joined by a shared id — the row itself is the pairing.
+export type JewelleryRow = {
+  id: string;
+  name: string;
+  jewellery_key: string;
+  makeup_key: string;
+  jewellery_original_key: string | null;
+  makeup_original_key: string | null;
+  category: string | null;
+  sort_order: number;
+};
+
+export type HairstyleRow = {
+  id: string;
+  name: string;
+  image_key: string;
+  category: string | null;
+  sort_order: number;
+};
+
 export type FavoriteRow = {
   id: string;
   user_id: string;
-  item_type: "model" | "background";
+  item_type: "model" | "background" | "jewellery" | "hairstyle";
   item_id: string;
 };
 
@@ -28,6 +49,8 @@ export type SelectionRow = {
   user_id: string;
   model_id: string | null;
   background_id: string | null;
+  jewellery_id: string | null;
+  hairstyle_id: string | null;
   updated_at: string;
 };
 

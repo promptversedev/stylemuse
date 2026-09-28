@@ -43,23 +43,35 @@ export async function GET(
   const { data: selectionRow } = await supabase
     .from("selections")
     .select(
-      "model_id, background_id, updated_at, " +
+      "model_id, background_id, jewellery_id, hairstyle_id, updated_at, " +
         "models(name, image_key, original_key), " +
-        "backgrounds(name, image_key, original_key)",
+        "backgrounds(name, image_key, original_key), " +
+        "jewellery(name, jewellery_key, makeup_key, jewellery_original_key, makeup_original_key), " +
+        "hairstyles(name, image_key, original_key)",
     )
     .eq("user_id", profile.id)
     .maybeSingle();
 
-  // PostgREST returns the joined row as an object (this is a to-one
-  // relationship via model_id/background_id's foreign key), but without
-  // generated Database types the client can only infer it generically —
-  // cast to the real shape instead of duplicating a codegen step here.
+  // PostgREST returns each joined row as an object (to-one relationships via
+  // the *_id foreign keys), but without generated Database types the client
+  // can only infer it generically — cast to the real shape instead of
+  // duplicating a codegen step here.
   const selection = selectionRow as unknown as {
     model_id: string | null;
     background_id: string | null;
+    jewellery_id: string | null;
+    hairstyle_id: string | null;
     updated_at: string;
     models: { name: string; image_key: string; original_key: string | null } | null;
     backgrounds: { name: string; image_key: string; original_key: string | null } | null;
+    jewellery: {
+      name: string;
+      jewellery_key: string;
+      makeup_key: string;
+      jewellery_original_key: string | null;
+      makeup_original_key: string | null;
+    } | null;
+    hairstyles: { name: string; image_key: string; original_key: string | null } | null;
   } | null;
 
   // `imageUrl` is the thumbnail to draw; `originalUrl` is the full-resolution
@@ -84,11 +96,45 @@ export async function GET(
       }
     : null;
 
+  // A jewellery pick is one row that carries two images — the jewellery shot
+  // and the makeup look styled to go with it. They ride together here for
+  // the same reason: there is no separate makeup id to look up, so a
+  // consuming site (Vastralook or anyone else) always gets both at once.
+  const jewellery = selection?.jewellery
+    ? {
+        id: selection.jewellery_id,
+        name: selection.jewellery.name,
+        imageUrl: r2PublicUrl(selection.jewellery.jewellery_key),
+        originalUrl: r2PublicUrl(
+          selection.jewellery.jewellery_original_key ?? selection.jewellery.jewellery_key,
+        ),
+        makeup: {
+          imageUrl: r2PublicUrl(selection.jewellery.makeup_key),
+          originalUrl: r2PublicUrl(
+            selection.jewellery.makeup_original_key ?? selection.jewellery.makeup_key,
+          ),
+        },
+      }
+    : null;
+
+  const hairstyle = selection?.hairstyles
+    ? {
+        id: selection.hairstyle_id,
+        name: selection.hairstyles.name,
+        imageUrl: r2PublicUrl(selection.hairstyles.image_key),
+        originalUrl: r2PublicUrl(
+          selection.hairstyles.original_key ?? selection.hairstyles.image_key,
+        ),
+      }
+    : null;
+
   return NextResponse.json(
     {
       displayName: profile.display_name,
       model,
       background,
+      jewellery,
+      hairstyle,
       updatedAt: selection?.updated_at ?? null,
     },
     { headers: corsHeaders() }

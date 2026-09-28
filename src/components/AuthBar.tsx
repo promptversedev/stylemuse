@@ -10,6 +10,8 @@ export function AuthBar({
   publicToken,
   selectedModelId,
   selectedBackgroundId,
+  selectedJewelleryId,
+  selectedHairstyleId,
   onSignIn,
   onSignOut,
 }: {
@@ -17,6 +19,8 @@ export function AuthBar({
   publicToken: string | null;
   selectedModelId: string | null;
   selectedBackgroundId: string | null;
+  selectedJewelleryId: string | null;
+  selectedHairstyleId: string | null;
   onSignIn: () => void;
   onSignOut: () => void;
 }) {
@@ -30,6 +34,8 @@ export function AuthBar({
         publicToken={publicToken}
         selectedModelId={selectedModelId}
         selectedBackgroundId={selectedBackgroundId}
+        selectedJewelleryId={selectedJewelleryId}
+        selectedHairstyleId={selectedHairstyleId}
       />
 
       {user && publicToken && (
