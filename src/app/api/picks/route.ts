@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { r2PublicUrl } from "@/lib/r2";
+import { makeupPick, r2PublicUrl } from "@/lib/r2";
 
 /**
  * GET /api/picks?model=<id>&background=<id>&jewellery=<id>&hairstyle=<id>
@@ -70,7 +70,7 @@ export async function GET(request: Request) {
     jewelleryId
       ? supabase
           .from("jewellery")
-          .select("id, name, jewellery_key, makeup_key, jewellery_original_key, makeup_original_key")
+          .select("id, name, image_key, original_key, makeup_original_key")
           .eq("id", jewelleryId)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -110,13 +110,12 @@ export async function GET(request: Request) {
 
   // A jewellery pick carries its paired makeup along — same row, same
   // reasoning as /api/embed/[token]: no separate id to resolve, so a caller
-  // always gets both images for the one id it asked about.
+  // always gets both for the one id it asked about.
   const jewelleryData = jewelleryRow.data as {
     id: string;
     name: string;
-    jewellery_key: string;
-    makeup_key: string;
-    jewellery_original_key: string | null;
+    image_key: string;
+    original_key: string | null;
     makeup_original_key: string | null;
   } | null;
 
@@ -124,12 +123,9 @@ export async function GET(request: Request) {
     ? {
         id: jewelleryData.id,
         name: jewelleryData.name,
-        imageUrl: r2PublicUrl(jewelleryData.jewellery_key),
-        originalUrl: r2PublicUrl(jewelleryData.jewellery_original_key ?? jewelleryData.jewellery_key),
-        makeup: {
-          imageUrl: r2PublicUrl(jewelleryData.makeup_key),
-          originalUrl: r2PublicUrl(jewelleryData.makeup_original_key ?? jewelleryData.makeup_key),
-        },
+        imageUrl: r2PublicUrl(jewelleryData.image_key),
+        originalUrl: r2PublicUrl(jewelleryData.original_key ?? jewelleryData.image_key),
+        makeup: makeupPick(jewelleryData.makeup_original_key),
       }
     : null;
 

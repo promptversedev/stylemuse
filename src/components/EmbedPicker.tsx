@@ -24,9 +24,9 @@ export type EmbedItem = {
   /**
    * The makeup look styled to go with this pick. Jewellery only.
    *
-   * One catalogue row carries both images so the pairing cannot come apart —
-   * there is no separate makeup id to resolve, and choosing the row chooses
-   * both. It travels with the pick for the same reason.
+   * Never drawn here — it exists only as an original, for generation — but it
+   * travels with the pick because it shares the jewellery's catalogue row, so
+   * choosing the row chooses both. See makeupPick for why imageUrl is set.
    */
   makeup?: { imageUrl: string; originalUrl: string } | null;
 };
@@ -128,19 +128,8 @@ export function EmbedPicker({
                 onClick={() => pick(item)}
                 disabled={sent !== null}
               >
-                {item.makeup ? (
-                  // The makeup is part of the pick, so it is shown beside the
-                  // jewellery rather than hidden behind it.
-                  <span className="embedpicker__pair">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.imageUrl} alt="" loading="lazy" />
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.makeup.imageUrl} alt="" loading="lazy" />
-                  </span>
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.imageUrl} alt="" loading="lazy" />
-                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={item.imageUrl} alt="" loading="lazy" />
                 <span>{item.name}</span>
               </button>
             </li>

@@ -272,19 +272,12 @@ img { display: block; max-width: 100%; }
    ratio exactly, so the whole background shows with no crop and no
    letterbox padding. */
 .tile--bg .tile__media { aspect-ratio: auto; height: auto; object-fit: contain; }
-/* Hairstyle source photos are square — cropping to 3:4 would cut the sides. */
-.tile--hairstyle .tile__media { aspect-ratio: auto; height: auto; object-fit: contain; }
+/* Hairstyle and jewellery thumbnails are uniform (819×819 and 614×1100), so
+   the tile reserves exactly that shape: nothing is cropped, and the grid holds
+   its layout while lazy images load instead of collapsing and jumping. */
+.tile--hairstyle .tile__media { aspect-ratio: 1 / 1; object-fit: contain; }
 
-/* Jewellery tiles show both images side by side — the jewellery shot and the
-   makeup styled to go with it — so picking the tile visibly picks both. */
-.tile__pair { display: flex; }
-.tile--jewellery .tile__pair .tile__media {
-  flex: 1; min-width: 0;
-  aspect-ratio: 3 / 4;
-}
-.tile--jewellery .tile__pair .tile__media:first-child {
-  border-right: 1px solid var(--surface);
-}
+.tile--jewellery .tile__media { aspect-ratio: 614 / 1100; object-fit: contain; }
 
 .tile__name {
   display: block;
@@ -424,30 +417,30 @@ img { display: block; max-width: 100%; }
    Responsive
    ========================================================================== */
 
-/* Jewellery tiles carry two images side by side, so the grid is left off the
-   breakpoints below and stays at the base 3 columns throughout — more would
-   make each half too narrow to read. */
-
 @media (min-width: 640px) {
   .picker__grid--model     { grid-template-columns: repeat(4, 1fr); }
+  .picker__grid--jewellery { grid-template-columns: repeat(4, 1fr); }
   .picker__grid--bg        { grid-template-columns: repeat(3, 1fr); }
   .picker__grid--hairstyle { grid-template-columns: repeat(4, 1fr); }
 }
 
 @media (min-width: 900px) {
   .picker__grid--model     { grid-template-columns: repeat(5, 1fr); }
+  .picker__grid--jewellery { grid-template-columns: repeat(5, 1fr); }
   .picker__grid--bg        { grid-template-columns: repeat(5, 1fr); }
   .picker__grid--hairstyle { grid-template-columns: repeat(5, 1fr); }
 }
 
 @media (min-width: 1300px) {
   .picker__grid--model     { grid-template-columns: repeat(6, 1fr); }
+  .picker__grid--jewellery { grid-template-columns: repeat(6, 1fr); }
   .picker__grid--bg        { grid-template-columns: repeat(6, 1fr); }
   .picker__grid--hairstyle { grid-template-columns: repeat(6, 1fr); }
 }
 
 @media (min-width: 1700px) {
   .picker__grid--model     { grid-template-columns: repeat(7, 1fr); }
+  .picker__grid--jewellery { grid-template-columns: repeat(7, 1fr); }
   .picker__grid--bg        { grid-template-columns: repeat(7, 1fr); }
   .picker__grid--hairstyle { grid-template-columns: repeat(7, 1fr); }
 }
@@ -612,17 +605,10 @@ img { display: block; max-width: 100%; }
   font-weight: 700;
 }
 
-/* Jewellery cards carry the makeup beside it, so they need twice the width. */
-.embedpicker__grid--jewellery {
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-}
-.embedpicker__pair {
-  display: flex;
-  gap: 4px;
-}
-.embedpicker__pair img {
-  flex: 1;
-  min-width: 0;
+/* Jewellery thumbnails are tall (614×1100); a 3:4 crop would cut the piece off. */
+.embedpicker__grid--jewellery .embedpicker__card img {
+  aspect-ratio: 614 / 1100;
+  object-fit: contain;
 }
 
 /* Hairstyle sources are square; a 3:4 crop would cut the sides off. */

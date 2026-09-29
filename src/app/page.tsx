@@ -21,7 +21,7 @@ export default async function HomePage() {
         .order("sort_order", { ascending: true }),
       supabase
         .from("jewellery")
-        .select("id, name, jewellery_key, makeup_key, category")
+        .select("id, name, image_key, category")
         .order("sort_order", { ascending: true }),
       supabase
         .from("hairstyles")
@@ -49,8 +49,7 @@ export default async function HomePage() {
   const jewelleryItems: JewelleryPickerItem[] = (jewellery ?? []).map((j) => ({
     id: j.id,
     name: j.name,
-    jewelleryImageUrl: r2PublicUrl(j.jewellery_key),
-    makeupImageUrl: r2PublicUrl(j.makeup_key),
+    imageUrl: r2PublicUrl(j.image_key),
     category: j.category,
   }));
 

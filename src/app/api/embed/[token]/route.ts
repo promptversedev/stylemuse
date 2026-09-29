@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
-import { r2PublicUrl } from "@/lib/r2";
+import { makeupPick, r2PublicUrl } from "@/lib/r2";
 
 // Public, unauthenticated endpoint. Any website can call this with a
 // person's public_token (copied from their "Get embed code" panel) to show
@@ -46,7 +46,7 @@ export async function GET(
       "model_id, background_id, jewellery_id, hairstyle_id, updated_at, " +
         "models(name, image_key, original_key), " +
         "backgrounds(name, image_key, original_key), " +
-        "jewellery(name, jewellery_key, makeup_key, jewellery_original_key, makeup_original_key), " +
+        "jewellery(name, image_key, original_key, makeup_original_key), " +
         "hairstyles(name, image_key, original_key)",
     )
     .eq("user_id", profile.id)
@@ -66,9 +66,8 @@ export async function GET(
     backgrounds: { name: string; image_key: string; original_key: string | null } | null;
     jewellery: {
       name: string;
-      jewellery_key: string;
-      makeup_key: string;
-      jewellery_original_key: string | null;
+      image_key: string;
+      original_key: string | null;
       makeup_original_key: string | null;
     } | null;
     hairstyles: { name: string; image_key: string; original_key: string | null } | null;
@@ -96,24 +95,19 @@ export async function GET(
       }
     : null;
 
-  // A jewellery pick is one row that carries two images — the jewellery shot
-  // and the makeup look styled to go with it. They ride together here for
-  // the same reason: there is no separate makeup id to look up, so a
-  // consuming site (Vastralook or anyone else) always gets both at once.
+  // A jewellery pick is one row carrying the jewellery and the makeup styled
+  // to go with it. The makeup rides along here so a consuming site (Vastralook
+  // or anyone else) always gets both — there is no separate makeup id to look
+  // up. It has no thumbnail; see makeupPick.
   const jewellery = selection?.jewellery
     ? {
         id: selection.jewellery_id,
         name: selection.jewellery.name,
-        imageUrl: r2PublicUrl(selection.jewellery.jewellery_key),
+        imageUrl: r2PublicUrl(selection.jewellery.image_key),
         originalUrl: r2PublicUrl(
-          selection.jewellery.jewellery_original_key ?? selection.jewellery.jewellery_key,
+          selection.jewellery.original_key ?? selection.jewellery.image_key,
         ),
-        makeup: {
-          imageUrl: r2PublicUrl(selection.jewellery.makeup_key),
-          originalUrl: r2PublicUrl(
-            selection.jewellery.makeup_original_key ?? selection.jewellery.makeup_key,
-          ),
-        },
+        makeup: makeupPick(selection.jewellery.makeup_original_key),
       }
     : null;
 

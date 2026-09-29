@@ -9,3 +9,17 @@ export function r2PublicUrl(key: string): string {
   }
   return `${base.replace(/\/$/, "")}/${key.replace(/^\//, "")}`;
 }
+
+/**
+ * The makeup that rides along with a jewellery pick.
+ *
+ * Makeup exists only as an original — it is never shown, only sent to
+ * generation — so `imageUrl` is the original too. It is kept rather than
+ * dropped because hosts built against the earlier `{ imageUrl, originalUrl }`
+ * shape require it, and would otherwise discard the makeup entirely.
+ */
+export function makeupPick(originalKey: string | null | undefined) {
+  if (!originalKey) return null;
+  const url = r2PublicUrl(originalKey);
+  return { imageUrl: url, originalUrl: url };
+}

@@ -3,14 +3,13 @@
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/IconSprite";
 
-// One tile is one look: the jewellery shot and the makeup styled to go with
-// it. There is no separate makeup grid — picking a jewellery tile picks both,
-// because they are one row, not two rows joined by an id.
+// The tile shows the jewellery thumbnail only. Its paired makeup is not shown
+// anywhere — it travels with the pick to generation, since both live on the
+// same row.
 export type JewelleryPickerItem = {
   id: string;
   name: string;
-  jewelleryImageUrl: string;
-  makeupImageUrl: string;
+  imageUrl: string;
   category: string | null;
 };
 
@@ -76,24 +75,14 @@ export function JewelleryPicker({
                   title={item.name}
                   onClick={() => onSelect(item.id)}
                 >
-                  <span className="tile__pair">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      className="tile__media"
-                      src={item.jewelleryImageUrl}
-                      alt={item.name}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      className="tile__media"
-                      src={item.makeupImageUrl}
-                      alt={`${item.name} — matching makeup`}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    className="tile__media"
+                    src={item.imageUrl}
+                    alt={item.name}
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <span className="tile__name">{item.name}</span>
                   <span className="tile__check">
                     <Icon id="i-check" />

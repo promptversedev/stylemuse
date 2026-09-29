@@ -17,14 +17,15 @@ export type BackgroundRow = {
   sort_order: number;
 };
 
-// One row is one look: the jewellery shot and the makeup styled to go with
-// it. They are not joined by a shared id — the row itself is the pairing.
+// One row is one look: the jewellery (thumbnail + original) and the makeup
+// styled to go with it. The makeup exists only as an original — it is never
+// shown, only sent to generation with the jewellery — and it lives on the
+// same row so the pairing cannot come apart.
 export type JewelleryRow = {
   id: string;
   name: string;
-  jewellery_key: string;
-  makeup_key: string;
-  jewellery_original_key: string | null;
+  image_key: string;
+  original_key: string | null;
   makeup_original_key: string | null;
   category: string | null;
   sort_order: number;
@@ -34,6 +35,7 @@ export type HairstyleRow = {
   id: string;
   name: string;
   image_key: string;
+  original_key: string | null;
   category: string | null;
   sort_order: number;
 };
