@@ -133,6 +133,39 @@ Same response shape as `/api/picks`, so you can handle them alike. The
 difference is that this one keeps answering with whatever they currently have
 selected, not just what they chose during one visit.
 
+## 5. Reading a signed-in person's favourites (partner API)
+
+For a site that has already signed the person in with Google — Vastralook — and
+wants to show the favourites they made in StyleMuse. It is matched on **email**:
+both sites use Google sign-in, so the same person has the same address.
+
+```
+GET /api/partner/favorites?email=<address>
+Authorization: Bearer <VASTRALOOK_PARTNER_SECRET>
+
+→ { found, displayName, favorites: { model: [...], background: [...], jewellery: [...], hairstyle: [...] } }
+```
+
+Each item has the same shape as `/api/picks` — `{ id, name, imageUrl, originalUrl }`,
+plus `makeup` on jewellery — newest favourite first. An email with no StyleMuse
+profile answers `found: false` with empty lists; it is not an error.
+
+**This one is not public**, unlike `/api/picks` and `/api/embed/<token>`:
+
+- It needs the shared secret, and it sends no CORS headers, so it is for the
+  partner's **server** only. The secret must never reach a browser.
+- The partner must send the email from its **own verified Google session**, never
+  from a field a visitor typed — otherwise anyone could read anyone's favourites.
+- With `VASTRALOOK_PARTNER_SECRET` unset the route answers 503, so it is off by
+  default.
+
+Set it up:
+
+1. Pick a long random value (`openssl rand -hex 32`).
+2. StyleMuse: `npx wrangler secret put VASTRALOOK_PARTNER_SECRET`, then deploy.
+3. Vastralook: set `STYLEMUSE_PARTNER_SECRET` to the same value (Vercel
+   environment variables).
+
 ## Endpoints
 
 | Endpoint | Auth | Purpose |
@@ -141,6 +174,7 @@ selected, not just what they chose during one visit.
 | `GET /api/picks?model&background` | none | Resolve catalogue ids to items |
 | `GET /api/embed/<token>` | none | A signed-in person's current pick |
 | `/connect.js` | none | The drop-in popup client |
+| `GET /api/partner/favorites?email` | shared secret | A signed-in person's favourites, for Vastralook's server |
 
 ## Security notes
 
