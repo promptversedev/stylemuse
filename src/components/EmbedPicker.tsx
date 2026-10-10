@@ -48,6 +48,13 @@ const KIND_WORDS: Record<EmbedKind, { one: string; many: string }> = {
 /** Namespaced so a host page can tell our messages from anyone else's. */
 const MESSAGE_TYPE = "stylemuse:pick";
 const READY_TYPE = "stylemuse:ready";
+/**
+ * Sent by the opener after READY: the ids of this person's favourites, which
+ * the opener already knows (it matched them by the signed-in email, server to
+ * server). Only ids travel — everything drawn comes from this page's own
+ * catalogue, so a message cannot put anything on screen that is not ours.
+ */
+const FAVOURITES_TYPE = "stylemuse:favourites";
 
 export function EmbedPicker({
   kind,
@@ -63,6 +70,21 @@ export function EmbedPicker({
   const words = KIND_WORDS[kind] ?? KIND_WORDS.model;
   const [query, setQuery] = useState("");
   const [sent, setSent] = useState<string | null>(null);
+  const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
+
+  // The opener's list of favourite ids. Accepted only from the opener window
+  // at the allowed origin, and only as an array of strings.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== targetOrigin || event.source !== window.opener) return;
+      const data = event.data as { type?: string; kind?: string; ids?: unknown } | null;
+      if (!data || data.type !== FAVOURITES_TYPE || data.kind !== kind) return;
+      if (!Array.isArray(data.ids)) return;
+      setFavouriteIds(data.ids.filter((id): id is string => typeof id === "string").slice(0, 200));
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [kind, targetOrigin]);
 
   // Tell the opener we are up, so it can drop a spinner and know the popup was
   // not blocked. Same origin discipline as the pick itself.
@@ -74,6 +96,15 @@ export function EmbedPicker({
     const q = query.trim().toLowerCase();
     return q ? items.filter((i) => i.name.toLowerCase().includes(q)) : items;
   }, [items, query]);
+
+  // Favourites first, in the order they were favourited (newest first), then
+  // everything else. An id this catalogue no longer has is simply skipped.
+  const { favourites, others } = useMemo(() => {
+    const byId = new Map(shown.map((i) => [i.id, i]));
+    const fav = favouriteIds.map((id) => byId.get(id)).filter((i): i is EmbedItem => !!i);
+    const favSet = new Set(fav.map((i) => i.id));
+    return { favourites: fav, others: shown.filter((i) => !favSet.has(i.id)) };
+  }, [shown, favouriteIds]);
 
   const pick = (item: EmbedItem) => {
     setSent(item.id);
@@ -97,6 +128,30 @@ export function EmbedPicker({
     window.setTimeout(() => window.close(), 220);
   };
 
+  const renderGrid = (list: EmbedItem[], favourite: boolean) => (
+    <ul className={`embedpicker__grid embedpicker__grid--${kind}`}>
+      {list.map((item) => (
+        <li key={item.id}>
+          <button
+            type="button"
+            className={`embedpicker__card${sent === item.id ? " is-sent" : ""}${favourite ? " is-favourite" : ""}`}
+            onClick={() => pick(item)}
+            disabled={sent !== null}
+          >
+            {favourite && (
+              <span className="embedpicker__heart" aria-hidden="true">
+                ♥
+              </span>
+            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={item.imageUrl} alt="" loading="lazy" />
+            <span>{item.name}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <main className="embedpicker">
       <header className="embedpicker__head">
@@ -119,22 +174,24 @@ export function EmbedPicker({
       {shown.length === 0 ? (
         <p className="embedpicker__empty">Nothing matches “{query}”.</p>
       ) : (
-        <ul className={`embedpicker__grid embedpicker__grid--${kind}`}>
-          {shown.map((item) => (
-            <li key={item.id}>
-              <button
-                type="button"
-                className={`embedpicker__card${sent === item.id ? " is-sent" : ""}`}
-                onClick={() => pick(item)}
-                disabled={sent !== null}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.imageUrl} alt="" loading="lazy" />
-                <span>{item.name}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <>
+          {favourites.length > 0 && (
+            <section aria-label="Your favourites">
+              <h2 className="embedpicker__section">
+                <span aria-hidden="true">♥</span> Your favourites
+              </h2>
+              {renderGrid(favourites, true)}
+            </section>
+          )}
+          {others.length > 0 && (
+            <section aria-label={favourites.length > 0 ? `All ${words.many}` : undefined}>
+              {favourites.length > 0 && (
+                <h2 className="embedpicker__section">All {words.many}</h2>
+              )}
+              {renderGrid(others, false)}
+            </section>
+          )}
+        </>
       )}
     </main>
   );
