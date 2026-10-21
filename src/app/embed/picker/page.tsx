@@ -20,9 +20,9 @@ import { EmbedPicker, type EmbedItem, type EmbedKind } from "@/components/EmbedP
 export default async function EmbedPickerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ client?: string; origin?: string; want?: string }>;
+  searchParams: Promise<{ client?: string; origin?: string; want?: string; category?: string }>;
 }) {
-  const { client, origin, want } = await searchParams;
+  const { client, origin, want, category: rawCategory } = await searchParams;
   const integration = await resolveIntegration(client ?? null, origin ?? null);
 
   if (!integration) {
@@ -58,30 +58,35 @@ export default async function EmbedPickerPage({
     image_key: string;
     original_key: string | null;
     makeup_original_key?: string | null;
+    category?: string | null;
   };
 
-  const { data } =
-    kind === "background"
-      ? await supabase
-          .from("backgrounds")
-          .select("id, name, image_key, original_key, category")
-          .order("sort_order", { ascending: true })
-      : kind === "hairstyle"
-        ? await supabase
-            .from("hairstyles")
-            .select("id, name, image_key, original_key, category")
-            .order("sort_order", { ascending: true })
-        : kind === "jewellery"
-          ? await supabase
-              .from("jewellery")
-              .select("id, name, image_key, original_key, makeup_original_key, category")
-              .order("sort_order", { ascending: true })
-          : await supabase
-              .from("models")
-              .select("id, name, image_key, original_key, gender, region")
-              .order("sort_order", { ascending: true });
+  /**
+   * Narrow the grid to one category, e.g. `category=Lehenga` from a studio
+   * that is dressing a lehenga, so its jewellery picker offers lehenga pieces.
+   * Letters and spaces only: it is matched with ilike, where `%` and `_` would
+   * otherwise be wildcards. Models have no category, so it is ignored there.
+   */
+  const category = /^[A-Za-z ]{1,40}$/.test(rawCategory ?? "") ? rawCategory!.trim() : null;
 
-  const items: EmbedItem[] = ((data ?? []) as Row[]).map((row) => ({
+  const TABLE: Record<EmbedKind, string> = {
+    model: "models",
+    background: "backgrounds",
+    jewellery: "jewellery",
+    hairstyle: "hairstyles",
+  };
+  const columns =
+    kind === "model"
+      ? "id, name, image_key, original_key"
+      : kind === "jewellery"
+        ? "id, name, image_key, original_key, makeup_original_key, category"
+        : "id, name, image_key, original_key, category";
+
+  let query = supabase.from(TABLE[kind]).select(columns).order("sort_order", { ascending: true });
+  if (category && kind !== "model") query = query.ilike("category", category);
+  const { data } = await query;
+
+  const items: EmbedItem[] = ((data ?? []) as unknown as Row[]).map((row) => ({
     id: row.id,
     name: row.name,
     imageUrl: r2PublicUrl(row.image_key),
@@ -91,11 +96,13 @@ export default async function EmbedPickerPage({
     // Jewellery brings its makeup — never shown, sent with the pick so the
     // host can hand it to generation. Every other kind sends null.
     makeup: kind === "jewellery" ? makeupPick(row.makeup_original_key) : null,
+    category: row.category ?? null,
   }));
 
   return (
     <EmbedPicker
       kind={kind}
+      category={kind === "model" ? null : category}
       items={items}
       targetOrigin={integration.origin}
       clientName={integration.name}

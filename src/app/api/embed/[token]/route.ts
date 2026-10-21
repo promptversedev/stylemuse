@@ -46,7 +46,7 @@ export async function GET(
       "model_id, background_id, jewellery_id, hairstyle_id, updated_at, " +
         "models(name, image_key, original_key), " +
         "backgrounds(name, image_key, original_key), " +
-        "jewellery(name, image_key, original_key, makeup_original_key), " +
+        "jewellery(name, image_key, original_key, makeup_original_key, category), " +
         "hairstyles(name, image_key, original_key)",
     )
     .eq("user_id", profile.id)
@@ -69,6 +69,7 @@ export async function GET(
       image_key: string;
       original_key: string | null;
       makeup_original_key: string | null;
+      category: string | null;
     } | null;
     hairstyles: { name: string; image_key: string; original_key: string | null } | null;
   } | null;
@@ -108,6 +109,7 @@ export async function GET(
           selection.jewellery.original_key ?? selection.jewellery.image_key,
         ),
         makeup: makeupPick(selection.jewellery.makeup_original_key),
+        category: selection.jewellery.category,
       }
     : null;
 

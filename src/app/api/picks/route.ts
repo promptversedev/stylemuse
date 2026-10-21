@@ -70,7 +70,7 @@ export async function GET(request: Request) {
     jewelleryId
       ? supabase
           .from("jewellery")
-          .select("id, name, image_key, original_key, makeup_original_key")
+          .select("id, name, image_key, original_key, makeup_original_key, category")
           .eq("id", jewelleryId)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -117,6 +117,7 @@ export async function GET(request: Request) {
     image_key: string;
     original_key: string | null;
     makeup_original_key: string | null;
+    category: string | null;
   } | null;
 
   const jewellery = jewelleryData
@@ -126,6 +127,7 @@ export async function GET(request: Request) {
         imageUrl: r2PublicUrl(jewelleryData.image_key),
         originalUrl: r2PublicUrl(jewelleryData.original_key ?? jewelleryData.image_key),
         makeup: makeupPick(jewelleryData.makeup_original_key),
+        category: jewelleryData.category,
       }
     : null;
 

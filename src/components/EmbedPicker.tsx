@@ -29,6 +29,8 @@ export type EmbedItem = {
    * choosing the row chooses both. See makeupPick for why imageUrl is set.
    */
   makeup?: { imageUrl: string; originalUrl: string } | null;
+  /** e.g. "Saree" or "Lehenga" for jewellery; null where a kind has none. */
+  category?: string | null;
 };
 
 /**
@@ -58,16 +60,25 @@ const FAVOURITES_TYPE = "stylemuse:favourites";
 
 export function EmbedPicker({
   kind,
+  category = null,
   items,
   targetOrigin,
   clientName,
 }: {
   kind: EmbedKind;
+  /** The category the opener asked for, already applied to `items`. */
+  category?: string | null;
   items: EmbedItem[];
   targetOrigin: string;
   clientName: string;
 }) {
-  const words = KIND_WORDS[kind] ?? KIND_WORDS.model;
+  const base = KIND_WORDS[kind] ?? KIND_WORDS.model;
+  // "Pick lehenga jewellery" reads right; for other kinds the category is
+  // shown beside the client name instead of being forced into the sentence.
+  const words =
+    category && kind === "jewellery"
+      ? { one: `${category.toLowerCase()} jewellery`, many: `${category.toLowerCase()} jewellery` }
+      : base;
   const [query, setQuery] = useState("");
   const [sent, setSent] = useState<string | null>(null);
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
@@ -120,6 +131,7 @@ export function EmbedPicker({
           // Only jewellery has one; sending null keeps the shape constant so
           // a host page never has to guess whether the field was forgotten.
           makeup: item.makeup ?? null,
+          category: item.category ?? null,
         },
       },
       targetOrigin,
@@ -159,6 +171,7 @@ export function EmbedPicker({
           <h1>Pick {words.one}</h1>
           <p>
             for <b>{clientName}</b>
+            {category && kind !== "jewellery" && <> · {category}</>}
           </p>
         </div>
         <input
@@ -171,7 +184,9 @@ export function EmbedPicker({
         />
       </header>
 
-      {shown.length === 0 ? (
+      {items.length === 0 ? (
+        <p className="embedpicker__empty">No {words.many} here yet.</p>
+      ) : shown.length === 0 ? (
         <p className="embedpicker__empty">Nothing matches “{query}”.</p>
       ) : (
         <>

@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/IconSprite";
+
+const CATEGORY_ORDER = ["Saree", "Lehenga"];
 
 // The tile shows the jewellery thumbnail only. Its paired makeup is not shown
 // anywhere — it travels with the pick to generation, since both live on the
@@ -32,8 +34,17 @@ export function JewelleryPicker({
 
   const groups = useMemo(() => {
     const present = new Set(items.map((j) => j.category).filter(Boolean) as string[]);
-    return [...present].sort();
+    const ordered = CATEGORY_ORDER.filter((c) => present.has(c));
+    return [...ordered, ...[...present].filter((c) => !CATEGORY_ORDER.includes(c)).sort()];
   }, [items]);
+
+  // A studio sending someone here for, say, lehenga jewellery adds
+  // `?category=Lehenga`; start on that filter instead of the whole catalogue.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("category")?.toLowerCase();
+    const match = groups.find((g) => g.toLowerCase() === wanted);
+    if (match) setGroup(match);
+  }, [groups]);
 
   const filtered = items.filter((j) => !group || j.category === group);
 
