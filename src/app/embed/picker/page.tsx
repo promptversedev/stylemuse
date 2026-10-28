@@ -59,6 +59,8 @@ export default async function EmbedPickerPage({
     original_key: string | null;
     makeup_original_key?: string | null;
     category?: string | null;
+    title?: string | null;
+    environment?: string | null;
   };
 
   /**
@@ -80,7 +82,9 @@ export default async function EmbedPickerPage({
       ? "id, name, image_key, original_key"
       : kind === "jewellery"
         ? "id, name, image_key, original_key, makeup_original_key, category"
-        : "id, name, image_key, original_key, category";
+        : kind === "background"
+          ? "id, name, title, image_key, original_key, category, environment"
+          : "id, name, image_key, original_key, category";
 
   let query = supabase.from(TABLE[kind]).select(columns).order("sort_order", { ascending: true });
   if (category && kind !== "model") query = query.ilike("category", category);
@@ -97,6 +101,8 @@ export default async function EmbedPickerPage({
     // host can hand it to generation. Every other kind sends null.
     makeup: kind === "jewellery" ? makeupPick(row.makeup_original_key) : null,
     category: row.category ?? null,
+    title: row.title ?? null,
+    environment: row.environment ?? null,
   }));
 
   return (

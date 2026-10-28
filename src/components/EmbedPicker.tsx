@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useEmbedFilters } from "@/components/EmbedFilters";
+import { filterStyles } from "@/components/FilterSelect";
 
 /**
  * The grid shown inside the embed popup.
@@ -31,6 +33,10 @@ export type EmbedItem = {
   makeup?: { imageUrl: string; originalUrl: string } | null;
   /** e.g. "Saree" or "Lehenga" for jewellery; null where a kind has none. */
   category?: string | null;
+  /** Backgrounds: the descriptive title, searched alongside the name. */
+  title?: string | null;
+  /** Backgrounds: Indoor / Outdoor / Studio / Indoor-Outdoor Transitional. */
+  environment?: string | null;
 };
 
 /**
@@ -103,10 +109,10 @@ export function EmbedPicker({
     window.opener?.postMessage({ type: READY_TYPE, kind }, targetOrigin);
   }, [kind, targetOrigin]);
 
-  const shown = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return q ? items.filter((i) => i.name.toLowerCase().includes(q)) : items;
-  }, [items, query]);
+  // Search by name or title words, then the Setting / Style dropdowns.
+  const { filtered: shown, controls: filterControls } = useEmbedFilters(items, query, {
+    categoryLabel: kind === "background" ? "Style" : "Category",
+  });
 
   // Favourites first, in the order they were favourited (newest first), then
   // everything else. An id this catalogue no longer has is simply skipped.
@@ -174,6 +180,7 @@ export function EmbedPicker({
             {category && kind !== "jewellery" && <> · {category}</>}
           </p>
         </div>
+        {filterControls && <div className={filterStyles.embedSlot}>{filterControls}</div>}
         <input
           type="search"
           className="embedpicker__search"
