@@ -263,6 +263,15 @@
   .embedFilters {
     flex-wrap: nowrap;
   }
+  /* The popup's own search box, right after the filters: full width, and
+     16px so iOS does not zoom in on it. */
+  .embedSlot + :global(.embedpicker__search) {
+    flex: 1 1 100%;
+    width: 100%;
+    height: 40px;
+    box-sizing: border-box;
+    font-size: 16px;
+  }
 }
 
 /* Fingers, not a cursor: taller rows that are easy to hit. */
