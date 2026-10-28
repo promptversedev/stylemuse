@@ -17,7 +17,7 @@
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jZXZ4b2lmY2ZyZGNoY21hdWt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwODg5NTIsImV4cCI6MjEwNTY2NDk1Mn0.o54IRkpQaHAWlUcS_ebTvM89s0-aGFMJ4T3H9UBeJsA",
     "NEXT_PUBLIC_R2_PUBLIC_URL": "https://pub-9937a81856e4495284603d66becb533d.r2.dev",
     "NEXT_PUBLIC_R2_PUBLIC_HOSTNAME": "pub-9937a81856e4495284603d66becb533d.r2.dev",
-    "NEXT_PUBLIC_SITE_URL": "https://stylemuse.gemini-logo-remover.workers.dev",
+    "NEXT_PUBLIC_SITE_URL": "https://stylemuse.daxilvaghani168.workers.dev",
     // Origins allowed to receive a public_token via ?return=. Without an
     // entry here the "Send to Studio" hand-back does not appear.
     // Public half of the Google OAuth client. The secret is NOT here —
