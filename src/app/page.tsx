@@ -17,7 +17,7 @@ export default async function HomePage() {
         .order("sort_order", { ascending: true }),
       supabase
         .from("backgrounds")
-        .select("id, name, image_key, category")
+        .select("id, name, title, image_key, category, environment")
         .order("sort_order", { ascending: true }),
       supabase
         .from("jewellery")
@@ -42,8 +42,10 @@ export default async function HomePage() {
   const backgroundItems: BackgroundPickerItem[] = (backgrounds ?? []).map((b) => ({
     id: b.id,
     name: b.name,
+    title: b.title,
     imageUrl: r2PublicUrl(b.image_key),
     category: b.category,
+    environment: b.environment,
   }));
 
   const jewelleryItems: JewelleryPickerItem[] = (jewellery ?? []).map((j) => ({
