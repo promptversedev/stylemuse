@@ -166,6 +166,30 @@ Set it up:
 3. Vastralook: set `STYLEMUSE_PARTNER_SECRET` to the same value (Vercel
    environment variables).
 
+## 6. Garment recommendation (partner API)
+
+For Vastralook: which backgrounds, jewellery sets and models go with a garment it has analysed. The answer is catalogue items in the same
+shape as `/api/picks`, so the partner can show them and let the person take one with no further call.
+
+```
+POST /api/partner/recommend
+Authorization: Bearer <VASTRALOOK_PARTNER_SECRET>
+{ "garment": { "category_family": "saree",
+               "colors": [{ "name": "green", "rgb": [20, 110, 80], "percent": 70 }, ...] },     // 1 to 8 colours
+  "options": { "nearest": 3, "voters": 30, "minVoters": 20, "top": 5 } }                      // optional
+
+→ { familyMatch, voters, sameColourVoters, settings, notes,
+    backgrounds: [{ id, name, title, imageUrl, originalUrl, score, picked, of, reasons, facts }],
+    jewellery:   [{ ...the same, category, makeup: { imageUrl, originalUrl } }],
+    models:      [{ id, name, imageUrl, originalUrl, score, reasons }] }
+```
+
+`id` is the catalogue id `/api/picks` takes. `picked` / `of`: how many of the similar reference photoshoots picked it among their
+`nearest` nearest. `familyMatch: false` means too few reference photoshoots of that garment type exist (only sarees are analysed so far),
+so the advice is weaker. How it decides: `src/lib/recommend`, and `supabase/RECOMMEND-QUERIES.md`. Not public: it needs the secret,
+sends no CORS headers and answers 503 while `VASTRALOOK_PARTNER_SECRET` is unset. Its data is in `catalogue_analysis`,
+`reference_photoshoots` and `reference_nearest` (migrations 0009 to 0011), filled by `scripts/import-reference.mjs`.
+
 ## Endpoints
 
 | Endpoint | Auth | Purpose |
@@ -175,6 +199,7 @@ Set it up:
 | `GET /api/embed/<token>` | none | A signed-in person's current pick |
 | `/connect.js` | none | The drop-in popup client |
 | `GET /api/partner/favorites?email` | shared secret | A signed-in person's favourites, for Vastralook's server |
+| `POST /api/partner/recommend` | shared secret | The backgrounds, jewellery and models that go with an analysed garment |
 
 ## Security notes
 
