@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useEmbedFilters } from "@/components/EmbedFilters";
 import { filterStyles } from "@/components/FilterSelect";
 
@@ -64,6 +64,22 @@ const READY_TYPE = "stylemuse:ready";
  */
 const FAVOURITES_TYPE = "stylemuse:favourites";
 
+/**
+ * The window to talk to: the page that opened this one as a popup, or, when this page is shown in a frame (the
+ * host's full-screen sheet on a phone), the page holding the frame. The target origin is checked either way.
+ */
+function hostWindow(): Window | null {
+  if (window.opener) return window.opener as Window;
+  return window.parent !== window ? window.parent : null;
+}
+
+/**
+ * How many tiles are drawn at first, and added each time the end of the grid comes into view. The catalogue can
+ * run to hundreds of pictures; drawing them all at once made the browser fetch every one and left the grid half
+ * empty while they arrived. Favourites come first, so they are always within the first page.
+ */
+const PAGE_SIZE = 24;
+
 export function EmbedPicker({
   kind,
   category = null,
@@ -88,12 +104,13 @@ export function EmbedPicker({
   const [query, setQuery] = useState("");
   const [sent, setSent] = useState<string | null>(null);
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
+  const [limit, setLimit] = useState(PAGE_SIZE);
 
-  // The opener's list of favourite ids. Accepted only from the opener window
-  // at the allowed origin, and only as an array of strings.
+  // The opener's list of favourite ids. Accepted only from the window that opened this one (or, framed in the host
+  // page's own sheet, the page holding the frame) at the allowed origin, and only as an array of strings.
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
-      if (event.origin !== targetOrigin || event.source !== window.opener) return;
+      if (event.origin !== targetOrigin || event.source !== hostWindow()) return;
       const data = event.data as { type?: string; kind?: string; ids?: unknown } | null;
       if (!data || data.type !== FAVOURITES_TYPE || data.kind !== kind) return;
       if (!Array.isArray(data.ids)) return;
@@ -106,7 +123,7 @@ export function EmbedPicker({
   // Tell the opener we are up, so it can drop a spinner and know the popup was
   // not blocked. Same origin discipline as the pick itself.
   useEffect(() => {
-    window.opener?.postMessage({ type: READY_TYPE, kind }, targetOrigin);
+    hostWindow()?.postMessage({ type: READY_TYPE, kind }, targetOrigin);
   }, [kind, targetOrigin]);
 
   // Search by name or title words, then the Setting / Style dropdowns.
@@ -123,9 +140,31 @@ export function EmbedPicker({
     return { favourites: fav, others: shown.filter((i) => !favSet.has(i.id)) };
   }, [shown, favouriteIds]);
 
+  // One page window over favourites-then-the-rest: favourites fill it first, the others take what is left.
+  const total = favourites.length + others.length;
+  const shownFavourites = favourites.slice(0, limit);
+  const shownOthers = others.slice(0, Math.max(0, limit - favourites.length));
+  const remaining = Math.max(0, total - limit);
+
+  // Scrolling near the end of the grid adds the next page, so there is nothing to press. The observer is set up
+  // again after every page: if the end is still in view (a tall screen, a short page), it adds another at once.
+  const endMarker = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = endMarker.current;
+    if (!el || remaining <= 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) setLimit((n) => n + PAGE_SIZE);
+      },
+      { rootMargin: "800px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [remaining, limit]);
+
   const pick = (item: EmbedItem) => {
     setSent(item.id);
-    window.opener?.postMessage(
+    hostWindow()?.postMessage(
       {
         type: MESSAGE_TYPE,
         kind,
@@ -142,8 +181,9 @@ export function EmbedPicker({
       },
       targetOrigin,
     );
-    // A beat so the tick is visible, then get out of the way.
-    window.setTimeout(() => window.close(), 220);
+    // A beat so the tick is visible, then get out of the way. In a popup that means closing it; framed in the
+    // host's sheet, the host closes the sheet when it receives the pick.
+    if (window.opener) window.setTimeout(() => window.close(), 220);
   };
 
   const renderGrid = (list: EmbedItem[], favourite: boolean) => (
@@ -162,7 +202,7 @@ export function EmbedPicker({
               </span>
             )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={item.imageUrl} alt="" loading="lazy" />
+            <img src={item.imageUrl} alt="" loading="lazy" decoding="async" />
             <span>{item.name}</span>
           </button>
         </li>
@@ -186,7 +226,10 @@ export function EmbedPicker({
           className="embedpicker__search"
           placeholder={`Search ${words.many}`}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setLimit(PAGE_SIZE);
+          }}
           aria-label={`Search ${words.many}`}
         />
       </header>
@@ -197,22 +240,30 @@ export function EmbedPicker({
         <p className="embedpicker__empty">Nothing matches “{query}”.</p>
       ) : (
         <>
-          {favourites.length > 0 && (
+          {shownFavourites.length > 0 && (
             <section aria-label="Your favourites">
               <h2 className="embedpicker__section">
                 <span aria-hidden="true">♥</span> Your favourites
               </h2>
-              {renderGrid(favourites, true)}
+              {renderGrid(shownFavourites, true)}
             </section>
           )}
-          {others.length > 0 && (
+          {shownOthers.length > 0 && (
             <section aria-label={favourites.length > 0 ? `All ${words.many}` : undefined}>
               {favourites.length > 0 && (
                 <h2 className="embedpicker__section">All {words.many}</h2>
               )}
-              {renderGrid(others, false)}
+              {renderGrid(shownOthers, false)}
             </section>
           )}
+          {remaining > 0 ? (
+            <div ref={endMarker} className="embedpicker__more" role="status" aria-live="polite">
+              <span className="embedpicker__more-dots" aria-hidden="true" />
+              <p>
+                Showing {total - remaining} of {total}
+              </p>
+            </div>
+          ) : null}
         </>
       )}
     </main>

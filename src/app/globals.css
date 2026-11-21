@@ -854,3 +854,120 @@ section + section > .embedpicker__section {
   opacity: 1;
   border-color: #ff3b4e;
 }
+
+/* The picker in the host's full-screen sheet on a phone: the heading and search stack, the search is full width
+   (16px so iOS does not zoom into it), and the grid is two columns of tiles built like the app's own picker tiles
+   (.tile): the picture fills the tile edge to edge, the name sits under it, and the picked one gets the accent
+   border and a tick. Backgrounds keep their own shape, so none is cropped. */
+@media (max-width: 560px) {
+  .embedpicker {
+    padding: 14px;
+  }
+
+  .embedpicker__head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .embedpicker__search {
+    flex: none;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 16px;
+  }
+
+  .embedpicker__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    align-items: start;
+  }
+
+  .embedpicker__card {
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .embedpicker__card:hover:not(:disabled) {
+    transform: none;
+    border-color: transparent;
+  }
+
+  .embedpicker__card img {
+    border-radius: 0;
+  }
+
+  .embedpicker__card > span:last-child {
+    display: block;
+    padding: 6px 7px;
+    overflow: hidden;
+    font-weight: 500;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .embedpicker__card.is-sent {
+    border-color: #ff3b4e;
+    box-shadow: none;
+  }
+
+  .embedpicker__card.is-sent::after {
+    content: "\2713";
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #ff3b4e;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+  }
+}
+
+/* The end of the grid: while there is more, a small spinner and a count. Reaching it (by scrolling) adds the next
+   page; see PAGE_SIZE and the observer in EmbedPicker.tsx. */
+.embedpicker__more {
+  margin: 18px 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.embedpicker__more p {
+  margin: 0;
+  font-size: 12px;
+  color: #8a8178;
+}
+
+.embedpicker__more-dots {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid rgba(23, 19, 14, 0.12);
+  border-top-color: #ff3b4e;
+  border-radius: 50%;
+  animation: embedpicker-spin 0.7s linear infinite;
+}
+
+@keyframes embedpicker-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* A background tile keeps one shape while its picture loads (a picture that has not arrived has no height of its
+   own, so with natural heights the tiles collapsed to just a name and jumped as pictures came in). */
+.embedpicker__grid--background .embedpicker__card img {
+  aspect-ratio: 3 / 4;
+  height: auto;
+  object-fit: cover;
+}
