@@ -63,6 +63,14 @@ const READY_TYPE = "stylemuse:ready";
  * catalogue, so a message cannot put anything on screen that is not ours.
  */
 const FAVOURITES_TYPE = "stylemuse:favourites";
+/**
+ * Sent by the opener after READY: the ids this site recommends for the garment it is working on, in package order
+ * (package 1 first), with the package number of each. Like the favourites, only ids travel: everything drawn comes from
+ * this page's own catalogue, so a message cannot put anything on screen that is not ours.
+ */
+const RECOMMENDED_TYPE = "stylemuse:recommended";
+/** At most this many are shown at the top (the opener sends five packages). */
+const MAX_RECOMMENDED = 8;
 
 /**
  * The window to talk to: the page that opened this one as a popup, or, when this page is shown in a frame (the
@@ -104,6 +112,8 @@ export function EmbedPicker({
   const [query, setQuery] = useState("");
   const [sent, setSent] = useState<string | null>(null);
   const [favouriteIds, setFavouriteIds] = useState<string[]>([]);
+  /** The ids recommended by the opener, and the package number each belongs to (same order). */
+  const [recommended, setRecommended] = useState<{ ids: string[]; numbers: number[] }>({ ids: [], numbers: [] });
   const [limit, setLimit] = useState(PAGE_SIZE);
 
   // The opener's list of favourite ids. Accepted only from the window that opened this one (or, framed in the host
@@ -111,10 +121,21 @@ export function EmbedPicker({
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== targetOrigin || event.source !== hostWindow()) return;
-      const data = event.data as { type?: string; kind?: string; ids?: unknown } | null;
-      if (!data || data.type !== FAVOURITES_TYPE || data.kind !== kind) return;
-      if (!Array.isArray(data.ids)) return;
-      setFavouriteIds(data.ids.filter((id): id is string => typeof id === "string").slice(0, 200));
+      const data = event.data as { type?: string; kind?: string; ids?: unknown; numbers?: unknown } | null;
+      if (!data || data.kind !== kind || !Array.isArray(data.ids)) return;
+      if (data.type === FAVOURITES_TYPE) {
+        setFavouriteIds(data.ids.filter((id): id is string => typeof id === "string").slice(0, 200));
+      } else if (data.type === RECOMMENDED_TYPE) {
+        const numbers = Array.isArray(data.numbers) ? data.numbers : [];
+        const ids: string[] = [];
+        const nums: number[] = [];
+        data.ids.slice(0, MAX_RECOMMENDED).forEach((id, i) => {
+          if (typeof id !== "string") return;
+          ids.push(id);
+          nums.push(typeof numbers[i] === "number" && Number.isInteger(numbers[i]) ? (numbers[i] as number) : i + 1);
+        });
+        setRecommended({ ids, numbers: nums });
+      }
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
@@ -131,14 +152,21 @@ export function EmbedPicker({
     categoryLabel: kind === "background" ? "Style" : "Category",
   });
 
-  // Favourites first, in the order they were favourited (newest first), then
-  // everything else. An id this catalogue no longer has is simply skipped.
-  const { favourites, others } = useMemo(() => {
+  // The recommended ones first (package order), then favourites in the order they were favourited (newest first), then
+  // everything else. An id this catalogue no longer has is simply skipped, and an item is shown once: where it is
+  // recommended, not again under favourites or in the rest.
+  const { recommendedItems, favourites, others } = useMemo(() => {
     const byId = new Map(shown.map((i) => [i.id, i]));
-    const fav = favouriteIds.map((id) => byId.get(id)).filter((i): i is EmbedItem => !!i);
-    const favSet = new Set(fav.map((i) => i.id));
-    return { favourites: fav, others: shown.filter((i) => !favSet.has(i.id)) };
-  }, [shown, favouriteIds]);
+    const recs: { item: EmbedItem; n: number }[] = [];
+    recommended.ids.forEach((id, i) => {
+      const item = byId.get(id);
+      if (item && !recs.some((r) => r.item.id === id)) recs.push({ item, n: recommended.numbers[i] });
+    });
+    const recSet = new Set(recs.map((r) => r.item.id));
+    const fav = favouriteIds.map((id) => byId.get(id)).filter((i): i is EmbedItem => !!i && !recSet.has(i.id));
+    const taken = new Set([...recSet, ...fav.map((i) => i.id)]);
+    return { recommendedItems: recs, favourites: fav, others: shown.filter((i) => !taken.has(i.id)) };
+  }, [shown, favouriteIds, recommended]);
 
   // One page window over favourites-then-the-rest: favourites fill it first, the others take what is left.
   const total = favourites.length + others.length;
@@ -186,19 +214,24 @@ export function EmbedPicker({
     if (window.opener) window.setTimeout(() => window.close(), 220);
   };
 
-  const renderGrid = (list: EmbedItem[], favourite: boolean) => (
+  const renderGrid = (list: EmbedItem[], favourite: boolean, numbers?: number[]) => (
     <ul className={`embedpicker__grid embedpicker__grid--${kind}`}>
-      {list.map((item) => (
+      {list.map((item, index) => (
         <li key={item.id}>
           <button
             type="button"
-            className={`embedpicker__card${sent === item.id ? " is-sent" : ""}${favourite ? " is-favourite" : ""}`}
+            className={`embedpicker__card${sent === item.id ? " is-sent" : ""}${favourite ? " is-favourite" : ""}${numbers ? " is-recommended" : ""}`}
             onClick={() => pick(item)}
             disabled={sent !== null}
           >
             {favourite && (
               <span className="embedpicker__heart" aria-hidden="true">
                 ♥
+              </span>
+            )}
+            {numbers && (
+              <span className="embedpicker__package" title={`Package ${numbers[index]}`}>
+                {numbers[index]}
               </span>
             )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -240,6 +273,15 @@ export function EmbedPicker({
         <p className="embedpicker__empty">Nothing matches “{query}”.</p>
       ) : (
         <>
+          {recommendedItems.length > 0 && (
+            <section aria-label="AI recommended for your garment" className="embedpicker__recommended">
+              <h2 className="embedpicker__section">
+                <span aria-hidden="true">✦</span> AI recommended
+                <small>the same numbers as the packages in the studio</small>
+              </h2>
+              {renderGrid(recommendedItems.map((r) => r.item), false, recommendedItems.map((r) => r.n))}
+            </section>
+          )}
           {shownFavourites.length > 0 && (
             <section aria-label="Your favourites">
               <h2 className="embedpicker__section">

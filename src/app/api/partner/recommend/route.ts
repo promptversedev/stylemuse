@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { partnerGate } from "@/lib/partner-auth";
 import { makeupPick, r2PublicUrl } from "@/lib/r2";
 import { createAdminClient } from "@/lib/supabase/server";
-import { recommend, type RankedItem } from "@/lib/recommend";
+import { recommend, type CatalogueItem, type ModelItem, type PackageModel, type PackagePart, type RankedItem } from "@/lib/recommend";
 import { MAX_BODY_BYTES, parseRequest } from "@/lib/recommend/request";
 import { createSupabaseStore } from "@/lib/recommend/store";
 
@@ -15,7 +15,8 @@ import { createSupabaseStore } from "@/lib/recommend/store";
  * let the person pick one without another round trip.
  *
  *   body   { garment: { category_family, colors: [{ name?, rgb, percent? }] }, options?: { nearest, voters, minVoters, top } }
- *   answer { familyMatch, voters, sameColourVoters, settings, notes, backgrounds: [...], jewellery: [...], models: [...] }
+ *   answer { familyMatch, voters, sameColourVoters, settings, notes, backgrounds: [...], jewellery: [...], models: [...],
+ *            packages: [{ n, photoshootId, similarity, score, model, background, jewellery }] }   (up to five, best first)
  *          familyMatch false = too few reference photoshoots of this garment type exist (a lehenga today), so the advice is weaker
  *
  * How it decides is in src/lib/recommend (and supabase/RECOMMEND-QUERIES.md): the similar reference photoshoots by main colour, then
@@ -38,6 +39,41 @@ function card(r: RankedItem) {
     of: r.of,
     reasons: r.reasons,
     facts: r.facts,
+  };
+}
+
+const analysisTitle = (item: CatalogueItem): string | null => {
+  const name = item.analysis?.name;
+  return typeof name === "string" && name.trim() ? name.trim() : null;
+};
+
+/** One part of a package: the catalogue item in the same shape as the lists above, scored by how alike it is to its photoshoot's own. */
+function packageCard(part: PackagePart | null, jewellery = false) {
+  if (!part) return null;
+  const { item } = part;
+  return {
+    id: item.id,
+    name: item.name,
+    title: analysisTitle(item),
+    imageUrl: r2PublicUrl(item.imageKey),
+    originalUrl: r2PublicUrl(item.originalKey ?? item.imageKey),
+    score: part.likeness,
+    rank: part.rank,
+    reasons: part.reasons,
+    ...(jewellery ? { category: item.category ?? null, makeup: makeupPick(item.makeupOriginalKey) } : {}),
+  };
+}
+
+function packageModel(m: PackageModel | null) {
+  if (!m) return null;
+  const item: ModelItem = m.item;
+  return {
+    id: item.id,
+    name: item.name,
+    imageUrl: r2PublicUrl(item.imageKey),
+    originalUrl: r2PublicUrl(item.originalKey ?? item.imageKey),
+    score: m.score,
+    reasons: m.reasons,
   };
 }
 
@@ -71,6 +107,16 @@ export async function POST(request: Request) {
           category: r.item.category ?? null,
           // The makeup rides along with its jewellery, exactly as /api/picks returns it.
           makeup: makeupPick(r.item.makeupOriginalKey),
+        })),
+        // Up to five model + background + jewellery combinations, best first (see src/lib/recommend/packages.ts).
+        packages: result.packages.map((p, i) => ({
+          n: i + 1,
+          photoshootId: p.photoshootId,
+          similarity: p.similarity,
+          score: p.score,
+          model: packageModel(p.model),
+          background: packageCard(p.background),
+          jewellery: packageCard(p.jewellery, true),
         })),
         models: result.models.map((m) => ({
           id: m.item.id,

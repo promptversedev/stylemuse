@@ -11,10 +11,12 @@
 import { mainColour, deltaE, type Colour } from "./colour";
 import { recommendModels, type ModelRow } from "./models";
 import { DEFAULT_SETTINGS, similarPhotoshoots, type GarmentInput, type Reference, type Settings } from "./similar";
+import { buildPackages, packageItemIds, type RecommendedPackage } from "./packages";
 import { countPicks, type NearestRow, type Picked } from "./vote";
 
 export { DEFAULT_SETTINGS } from "./similar";
 export type { GarmentInput, Settings } from "./similar";
+export type { RecommendedPackage, PackagePart, PackageModel } from "./packages";
 
 export type ItemKind = "background" | "jewellery";
 
@@ -72,6 +74,11 @@ export type RecommendResult = {
   backgrounds: RankedItem[];
   jewellery: RankedItem[];
   models: RankedModel[];
+  /**
+   * Up to five packages, best first: a model, a background and a jewellery set that belong together, each built on one similar
+   * reference photoshoot (see packages.ts). Empty when no similar photoshoot has a nearest background or jewellery set.
+   */
+  packages: RecommendedPackage[];
 };
 
 /** The jewellery sets in the reference data are per garment: a saree gets saree sets. */
@@ -148,9 +155,13 @@ export async function recommend(garment: GarmentInput, store: RecommendStore, ov
   // a few more than asked for, so dropping an item that no longer exists or is the wrong category still leaves enough
   const bgPicked = countPicks(bgRows, settings.nearest, settings.top + 5);
   const jwPicked = countPicks(jwRows, settings.nearest, settings.top + 15);
+  // The packages are built on the first photoshoots (a dozen, so a missing item still leaves five): their nearest items are read too.
+  const packageVoters = new Set(voters.slice(0, 12).map((v) => v.ref.id));
+  const bgWanted = [...new Set([...bgPicked.map((p) => p.id), ...packageItemIds(bgRows, packageVoters, settings.nearest)])];
+  const jwWanted = [...new Set([...jwPicked.map((p) => p.id), ...packageItemIds(jwRows, packageVoters, settings.nearest)])];
   const [bgItems, jwItems] = await Promise.all([
-    bgPicked.length ? store.items("background", bgPicked.map((p) => p.id)) : new Map<string, CatalogueItem>(),
-    jwPicked.length ? store.items("jewellery", jwPicked.map((p) => p.id)) : new Map<string, CatalogueItem>(),
+    bgWanted.length ? store.items("background", bgWanted) : new Map<string, CatalogueItem>(),
+    jwWanted.length ? store.items("jewellery", jwWanted) : new Map<string, CatalogueItem>(),
   ]);
   for (const [id, item] of jwItems) if (item.category !== wantCategory) jwItems.delete(id);
 
@@ -160,6 +171,18 @@ export async function recommend(garment: GarmentInput, store: RecommendStore, ov
   }
   const modelRows = recommendModels(garment.category_family, voters, models, settings.top);
   const byModel = new Map(models.map((m) => [m.id, m]));
+  const packages = buildPackages({
+    family: garment.category_family,
+    voters,
+    bgRows,
+    jwRows,
+    bgItems,
+    jwItems,
+    bgTotal,
+    jwTotal,
+    models,
+    nearest: settings.nearest,
+  });
   return {
     settings,
     familyMatch: sameFamily >= settings.minSameFamily,
@@ -168,6 +191,7 @@ export async function recommend(garment: GarmentInput, store: RecommendStore, ov
     notes,
     backgrounds: rank(bgPicked, bgItems, "background", bgTotal, settings.nearest, garment).slice(0, settings.top),
     jewellery,
+    packages,
     models: modelRows.flatMap((r) => (byModel.has(r.id) ? [{ item: byModel.get(r.id) as ModelItem, score: Math.round(Math.max(0, Math.min(1, r.score)) * 100), reasons: r.reasons }] : [])),
   };
 }

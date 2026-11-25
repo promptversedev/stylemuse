@@ -971,3 +971,48 @@ section + section > .embedpicker__section {
   height: auto;
   object-fit: cover;
 }
+
+/* The "AI recommended" row at the top of the picker: the pieces of the studio's five packages, numbered 1 to 5. */
+.embedpicker__recommended {
+  margin-bottom: 8px;
+  padding: 12px 12px 4px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 59, 78, 0.08), rgba(255, 122, 89, 0.06));
+  border: 1px solid rgba(255, 59, 78, 0.22);
+}
+
+.embedpicker__recommended .embedpicker__section {
+  margin-top: 0;
+}
+
+.embedpicker__section small {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #8a8178;
+}
+
+.embedpicker__card.is-recommended {
+  border-color: rgba(255, 59, 78, 0.45);
+}
+
+.embedpicker__package {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ff3b4e;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 1px 4px rgba(23, 19, 14, 0.25);
+}

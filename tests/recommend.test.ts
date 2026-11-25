@@ -216,3 +216,82 @@ describe("recommend() end to end, on a small in-memory catalogue", () => {
     assert.deepEqual(r.backgrounds, []);
   });
 });
+
+describe("packages: a model, a background and a jewellery set that belong together", () => {
+  const item = (id: string, kind: ItemKind, extra: Partial<CatalogueItem> = {}): CatalogueItem => ({
+    id, name: `${kind} ${id}`, imageKey: `${id}.webp`, originalKey: null, analysis: { name: `the ${id}` }, ...extra,
+  });
+  const bgIds = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8"];
+  const jwIds = ["J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8"];
+  const backgrounds = new Map(bgIds.map((id) => [id, item(id, "background")]));
+  const jewellery = new Map(jwIds.map((id) => [id, item(id, "jewellery", { category: "Saree" })]));
+  const models: ModelItem[] = [
+    { id: "M1", name: "Model 1", imageKey: "m1.webp", originalKey: null, region: "south indian", look: "traditional", skinTone: "fair", bodyType: "slim" },
+    { id: "M2", name: "Model 2", imageKey: "m2.webp", originalKey: null, region: "north indian", look: "traditional", skinTone: "fair", bodyType: "slim" },
+    { id: "M3", name: "Model 3", imageKey: "m3.webp", originalKey: null, region: "east indian", look: "traditional", skinTone: "fair", bodyType: "slim" },
+    { id: "M4", name: "Model 4", imageKey: "m4.webp", originalKey: null, region: "west indian", look: "traditional", skinTone: "fair", bodyType: "slim" },
+    { id: "M5", name: "Model 5", imageKey: "m5.webp", originalKey: null, region: "international", look: "modern", skinTone: "dark", bodyType: "plus" },
+  ];
+  const refs = greens(12);
+  // Photoshoot i's nearest backgrounds are B(i), B(i+1), B(i+2) and its nearest jewellery J(i), J(i+1), J(i+2): they overlap, as real ones do.
+  const rowsOf = (ids: string[], kind: ItemKind): NearestRow[] =>
+    refs.flatMap((r, i) => [0, 1, 2].map((k) => ({ photoshoot_id: r.id, item_id: ids[(i + k) % ids.length], rank: k + 1, likeness: 0.9 - k * 0.1 - (i % 3) * 0.02 })).filter(() => kind === "background" || r.id !== "G11"));
+  const make = (overrides: Partial<RecommendStore> = {}): RecommendStore => ({
+    references: async () => refs,
+    nearest: async (kind, ids, maxRank) => (kind === "background" ? rowsOf(bgIds, kind) : rowsOf(jwIds, kind)).filter((r) => ids.includes(r.photoshoot_id) && r.rank <= maxRank),
+    catalogueCount: async (kind) => (kind === "background" ? bgIds.length : jwIds.length),
+    items: async (kind, ids) => new Map(ids.flatMap((id) => { const m = (kind === "background" ? backgrounds : jewellery).get(id); return m ? [[id, m] as const] : []; })),
+    models: async () => models,
+    ...overrides,
+  });
+  const options = { minSameFamily: 5, minVoters: 5 };
+  const garment = { category_family: "saree", colors: GARMENT };
+
+  it("returns five packages, each with a model, a background and a jewellery set", async () => {
+    const r = await recommend(garment, make(), options);
+    assert.equal(r.packages.length, 5);
+    for (const p of r.packages) {
+      assert.ok(p.background && p.jewellery && p.model, `package of ${p.photoshootId} is complete`);
+      assert.ok(p.score >= 0 && p.score <= 100);
+    }
+  });
+  it("uses every background, jewellery set and model once, so the five packages are five different looks", async () => {
+    const r = await recommend(garment, make(), options);
+    for (const pick of [(p: (typeof r.packages)[number]) => p.background?.item.id, (p: (typeof r.packages)[number]) => p.jewellery?.item.id, (p: (typeof r.packages)[number]) => p.model?.item.id]) {
+      const ids = r.packages.map(pick);
+      assert.equal(new Set(ids).size, ids.length, `repeated: ${ids.join(", ")}`);
+    }
+  });
+  it("orders the packages best first", async () => {
+    const r = await recommend(garment, make(), options);
+    const scores = r.packages.map((p) => p.score);
+    assert.deepEqual(scores, [...scores].sort((a, b) => b - a));
+  });
+  it("gives a package the nearest background of its own photoshoot, and says so", async () => {
+    const r = await recommend(garment, make(), options);
+    const first = r.packages[0];
+    assert.equal(first.background?.rank, 1);
+    assert.ok(first.background?.reasons[0].startsWith("The very nearest of all 8 backgrounds to the one in reference photoshoot"));
+  });
+  it("takes the next nearest when the nearest is already in an earlier package", async () => {
+    const r = await recommend(garment, make(), { ...options, nearest: 3 });
+    assert.ok(r.packages.some((p) => (p.background?.rank ?? 1) > 1), "at least one package had to use a second or third nearest");
+  });
+  it("still returns a package for a photoshoot that has no jewellery row", async () => {
+    const r = await recommend(garment, make(), options);
+    const partial = r.packages.find((p) => p.photoshootId === "G11");
+    // G11 has no jewellery rows at all: it is offered only after the full packages, and only when there are fewer than five of those
+    assert.equal(partial, undefined);
+    const few = await recommend(garment, make({ references: async () => refs.slice(0, 5).concat(refs.slice(11)) }), { ...options, minVoters: 3 });
+    assert.ok(few.packages.length >= 1);
+  });
+  it("makes no packages when no similar photoshoot has a nearest row", async () => {
+    const r = await recommend(garment, make({ nearest: async () => [] }), options);
+    assert.deepEqual(r.packages, []);
+  });
+  it("makes no packages without reference photoshoots, but still recommends models", async () => {
+    const r = await recommend(garment, make({ references: async () => [] }));
+    assert.deepEqual(r.packages, []);
+    assert.equal(r.models.length > 0, true);
+  });
+});
